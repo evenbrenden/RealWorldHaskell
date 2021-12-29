@@ -6,7 +6,7 @@ import Control.Monad.Reader (runReaderT)
 import Database.Persist.Postgresql (withPostgresqlConn, runMigrationSilent)
 import Network.HTTP.Client (newManager)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Servant.Client (ClientEnv(..), parseBaseUrl)
+import Servant.Client (ClientEnv(..), parseBaseUrl, mkClientEnv)
 
 import CacheServer (runServer)
 import Cache (RedisInfo, localRedisInfo)
@@ -17,7 +17,7 @@ setupTests :: IO (PGInfo, RedisInfo, ClientEnv, ThreadId)
 setupTests = do
   mgr <- newManager tlsManagerSettings
   baseUrl <- parseBaseUrl "http://127.0.0.1:8000"
-  let clientEnv = ClientEnv mgr baseUrl Nothing
+  let clientEnv = mkClientEnv mgr baseUrl
   runStdoutLoggingT $ withPostgresqlConn localConnString $ \dbConn ->
     runReaderT (runMigrationSilent migrateAll) dbConn
   tid <- forkIO runServer
